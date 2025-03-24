@@ -2,10 +2,7 @@
 
 import React, { useState } from "react";
 import Slider from "rc-slider";
-import "rc-slider/assets/index.css";
-import TimePicker from "react-time-picker";  // Import the time picker
-import 'react-time-picker/dist/TimePicker.css';
-
+import "rc-slider/assets/index.css";  // Import the time picker
 
 const EmployerForm: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -14,7 +11,8 @@ const EmployerForm: React.FC = () => {
     location: "",
     type: "",
     description: "",
-    working_time: "12:00",  // Default time in 12-hour format
+    start_time: "07:00", // Default start time (7:00 AM)
+    end_time: "17:00", // Default end time (5:00 PM)
     job_category: "",
     salary_range: [30000, 90000],
   });
@@ -26,15 +24,25 @@ const EmployerForm: React.FC = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    setFormData((prevData) => {
+      const updatedData = { ...prevData, [name]: value };
+      return updatedData;
+    });
   };
 
   // Validation function with regular expressions
   const validateForm = () => {
     const newErrors: any = {};
+
+    // for time validation
+    const startHour = parseInt(formData.start_time.split(":")[0], 10);
+    const endHour = parseInt(formData.end_time.split(":")[0], 10);
+
+    const startTime = new Date(`1970-01-01T${formData.start_time}:00`);
+    const endTime = new Date(`1970-01-01T${formData.end_time}:00`);
+    if (endTime <= startTime) {
+      newErrors.end_time = "End time must be later than start time.";
+    }
 
     const nameRegex = /^[A-Za-z\s]+$/; // Allows letters and spaces for title and name
     const locationRegex = /^[A-Za-z0-9\s,]+$/; // Allows letters, numbers, and commas for location
@@ -54,18 +62,14 @@ const EmployerForm: React.FC = () => {
         "Location should contain letters, numbers, and commas only";
 
     if (!formData.type) newErrors.type = "Job type is required";
-    
+
     if (formData.salary_range[0] >= formData.salary_range[1])
       newErrors.salary_range = "Minimum salary should be less than maximum salary";
     if (!formData.description)
       newErrors.description = "Job description is required";
 
-    if (!formData.working_time)
-      newErrors.working_time = "Working time is required";
-
     if (!formData.job_category)
       newErrors.job_category = "Job category is required";
-
     return Object.keys(newErrors).length === 0 ? true : newErrors;
   };
 
@@ -101,7 +105,8 @@ const EmployerForm: React.FC = () => {
             type: "",
             salary_range: [],
             description: "",
-            working_time: "12:00", // Reset to default time
+            start_time: "07:00", // Reset to default start time
+            end_time: "17:00", // Reset to default end time
             job_category: "",
           });
         } else {
@@ -126,11 +131,10 @@ const EmployerForm: React.FC = () => {
             <div className="card-body">
               {message && (
                 <div
-                  className={`alert ${
-                    message.includes("successfully")
-                      ? "alert-success"
-                      : "alert-danger"
-                  }`}
+                  className={`alert ${message.includes("successfully")
+                    ? "alert-success"
+                    : "alert-danger"
+                    }`}
                   role="alert"
                 >
                   {message}
@@ -144,9 +148,8 @@ const EmployerForm: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    className={`form-control ${
-                      errors.title ? "is-invalid" : ""
-                    }`}
+                    className={`form-control ${errors.title ? "is-invalid" : ""
+                      }`}
                     id="title"
                     name="title"
                     value={formData.title}
@@ -164,9 +167,8 @@ const EmployerForm: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    className={`form-control ${
-                      errors.name ? "is-invalid" : ""
-                    }`}
+                    className={`form-control ${errors.name ? "is-invalid" : ""
+                      }`}
                     id="name"
                     name="name"
                     value={formData.name}
@@ -184,9 +186,8 @@ const EmployerForm: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    className={`form-control ${
-                      errors.location ? "is-invalid" : ""
-                    }`}
+                    className={`form-control ${errors.location ? "is-invalid" : ""
+                      }`}
                     id="location"
                     name="location"
                     value={formData.location}
@@ -257,9 +258,8 @@ const EmployerForm: React.FC = () => {
                     Job Description
                   </label>
                   <textarea
-                    className={`form-control ${
-                      errors.description ? "is-invalid" : ""
-                    }`}
+                    className={`form-control ${errors.description ? "is-invalid" : ""
+                      }`}
                     id="description"
                     name="description"
                     value={formData.description}
@@ -270,32 +270,48 @@ const EmployerForm: React.FC = () => {
                     <div className="invalid-feedback">{errors.description}</div>
                   )}
                 </div>
+                {/* Start Time  END TIME AND AM/PM*/}
+                <div className="mb-3">
+                  <div className="d-flex flex-column p-3 border rounded-3 shadow-sm">
+                    <h5 className="mb-3">Working Hours</h5>
+                    <div className="d-flex justify-content-between">
+                      {/* Start Time */}
+                      <div className={`flex-fill mb-3 ${errors.start_time ? "is-invalid" : ""}`}>
+                        <label htmlFor="start_time" className="form-label">
+                          Start Time
+                        </label>
+                        <input
+                          type="time"
+                          className={`form-control ${errors.start_time ? "is-invalid" : ""}`}
+                          id="start_time"
+                          name="start_time"
+                          value={formData.start_time}
+                          onChange={handleChange}
+                        />
+                        {errors.start_time && (
+                          <div className="invalid-feedback">{errors.start_time}</div>
+                        )}
+                      </div>
 
-                {/* Working Time (AM/PM Time Picker) */}
-                <div
-                  className={`mb-3 ${errors.working_time ? "is-invalid" : ""}`}
-                >
-                  <label htmlFor="working_time" className="form-label">
-                    Working Time 
-                  </label>
-                  <TimePicker
-                    id="working_time"
-                    name="working_time"
-                    value={formData.working_time}
-                    onChange={(newTime) => {
-                      setFormData((prevData) => ({
-                        ...prevData,
-                        working_time: newTime || "12:00", // Default to 12:00 if null
-                      }));
-                    }}
-                    format="hh:mm a" // 12-hour format with AM/PM
-                    clearIcon={null} // Optional: Remove clear icon
-                  />
-                  {errors.working_time && (
-                    <div className="invalid-feedback">
-                      {errors.working_time}
+                      {/* End Time */}
+                      <div className={`flex-fill mb-3 ${errors.end_time ? "is-invalid" : ""}`}>
+                        <label htmlFor="end_time" className="form-label">
+                          End Time
+                        </label>
+                        <input
+                          type="time"
+                          className={`form-control ${errors.end_time ? "is-invalid" : ""}`}
+                          id="end_time"
+                          name="end_time"
+                          value={formData.end_time}
+                          onChange={handleChange}
+                        />
+                        {errors.end_time && (
+                          <div className="invalid-feedback">{errors.end_time}</div>
+                        )}
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 {/* Job Category */}
@@ -307,9 +323,8 @@ const EmployerForm: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    className={`form-control ${
-                      errors.job_category ? "is-invalid" : ""
-                    }`}
+                    className={`form-control ${errors.job_category ? "is-invalid" : ""
+                      }`}
                     id="job_category"
                     name="job_category"
                     value={formData.job_category}
