@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";  // Import the time picker
 
@@ -15,10 +15,15 @@ const EmployerForm: React.FC = () => {
     end_time: "17:00", // Default end time (5:00 PM)
     job_category: "",
     salary_range: [30000, 90000],
+    address: "",
+    state: "",
+    city: "",
   });
 
   const [errors, setErrors] = useState<any>({});
   const [message, setMessage] = useState<string>("");
+  const [states, setStates] = useState<string[]>([]); // For storing states
+  const [cities, setCities] = useState<string[]>([]); // For storing cities based on selected state
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -63,6 +68,10 @@ const EmployerForm: React.FC = () => {
 
     if (!formData.type) newErrors.type = "Job type is required";
 
+    if (!formData.address) newErrors.address = "Address is required";
+    if (!formData.state) newErrors.state = "State is required";
+    if (!formData.city) newErrors.city = "City is required";
+
     if (formData.salary_range[0] >= formData.salary_range[1])
       newErrors.salary_range = "Minimum salary should be less than maximum salary";
     if (!formData.description)
@@ -79,6 +88,42 @@ const EmployerForm: React.FC = () => {
       salary_range: value,
     }));
   };
+
+  // Fetch cities when a state is selected
+  useEffect(() => {
+    if (formData.state) {
+      const fetchCities = async () => {
+        try {
+          const response = await fetch(
+            `http://api.geonames.org/searchJSON?formatted=true&country=IN&adminCode1=${formData.state}&username=ankit123`
+          );
+          const data = await response.json();
+          setCities(data.geonames); // Assuming the response contains an array of cities
+        } catch (error) {
+          console.error("Error fetching cities:", error);
+        }
+      };
+
+      fetchCities();
+    }
+  }, [formData.state]);
+
+  // Fetch states when the component mounts
+  useEffect(() => {
+    const fetchStates = async () => {
+      try {
+        const response = await fetch(
+          "http://api.geonames.org/childrenJSON?geonameId=1269750&username=ankit123"
+        );
+        const data = await response.json();
+        setStates(data.geonames); // Assuming the response contains an array of states
+      } catch (error) {
+        console.error("Error fetching states:", error);
+      }
+    };
+
+    fetchStates();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,6 +153,9 @@ const EmployerForm: React.FC = () => {
             start_time: "07:00", // Reset to default start time
             end_time: "17:00", // Reset to default end time
             job_category: "",
+            address: "",
+            state: "",
+            city: "",
           });
         } else {
           setMessage(data.message || "Something went wrong!");
@@ -196,6 +244,79 @@ const EmployerForm: React.FC = () => {
                   {errors.location && (
                     <div className="invalid-feedback">{errors.location}</div>
                   )}
+                </div>
+
+
+
+                {/* Location Details: Address, State, and City */}
+                <div className="mb-3">
+                  <div className="d-flex flex-column p-3 border rounded-3 shadow-sm">
+                    <h5 className="mb-3">Location Details</h5>
+
+                    {/* State and City in the same row */}
+                    <div className="d-flex justify-content-between">
+
+                      {/* State */}
+                      <div className={`flex-fill mb-3 ${errors.state ? "is-invalid" : ""}`}>
+                        <label htmlFor="state" className="form-label">
+                          State
+                        </label>
+                        <select
+                          className={`form-select ${errors.state ? "is-invalid" : ""}`}
+                          id="state"
+                          name="state"
+                          value={formData.state}
+                          onChange={handleChange}
+                        >
+                          <option value="">Select State</option>
+                          {states.map((state) => (
+                            <option key={state.geonameId} value={state.adminCode1}>
+                              {state.name}
+                            </option>
+                          ))}
+                        </select>
+                        {errors.state && <div className="invalid-feedback">{errors.state}</div>}
+                      </div>
+
+                      {/* City */}
+                      <div className={`flex-fill mb-3 ${errors.city ? "is-invalid" : ""}`}>
+                        <label htmlFor="city" className="form-label">
+                          City
+                        </label>
+                        <select
+                          className={`form-select ${errors.city ? "is-invalid" : ""}`}
+                          id="city"
+                          name="city"
+                          value={formData.city}
+                          onChange={handleChange}
+                        >
+                          <option value="">Select City</option>
+                          {cities.map((city) => (
+                            <option key={city.geonameId} value={city.name}>
+                              {city.name}
+                            </option>
+                          ))}
+                        </select>
+                        {errors.city && <div className="invalid-feedback">{errors.city}</div>}
+                      </div>
+                    </div>
+
+                    {/* Address (comes below State and City) */}
+                    <div className={`mb-3 ${errors.address ? "is-invalid" : ""}`}>
+                      <label htmlFor="address" className="form-label">
+                        Address
+                      </label>
+                      <textarea
+                        type="text"
+                        className={`form-control ${errors.address ? "is-invalid" : ""}`}
+                        id="address"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleChange}
+                      />
+                      {errors.address && <div className="invalid-feedback">{errors.address}</div>}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Job Type */}
