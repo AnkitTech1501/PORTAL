@@ -98,8 +98,6 @@ const EmployerForm: React.FC = () => {
             `http://127.0.0.1:8000/api/cities/${formData.state}` // Laravel API endpoint for cities based on state
           );
           const data = await response.json();
-          console.log("data = ",data);
-          return false;
           setCities(data); // Assuming the response contains an array of cities
         } catch (error) {
           console.error("Error fetching cities:", error);
