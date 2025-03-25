@@ -95,10 +95,12 @@ const EmployerForm: React.FC = () => {
       const fetchCities = async () => {
         try {
           const response = await fetch(
-            `http://api.geonames.org/searchJSON?formatted=true&country=IN&adminCode1=${formData.state}&username=ankit123`
+            `http://127.0.0.1:8000/api/cities/${formData.state}` // Laravel API endpoint for cities based on state
           );
           const data = await response.json();
-          setCities(data.geonames); // Assuming the response contains an array of cities
+          console.log("data = ",data);
+          return false;
+          setCities(data); // Assuming the response contains an array of cities
         } catch (error) {
           console.error("Error fetching cities:", error);
         }
@@ -112,11 +114,10 @@ const EmployerForm: React.FC = () => {
   useEffect(() => {
     const fetchStates = async () => {
       try {
-        const response = await fetch(
-          "http://api.geonames.org/childrenJSON?geonameId=1269750&username=ankit123"
-        );
+        const response = await fetch("http://127.0.0.1:8000/api/states"); // Laravel API endpoint for states
         const data = await response.json();
-        setStates(data.geonames); // Assuming the response contains an array of states
+        console.log("data = ",data);
+        setStates(data); // Assuming the response contains an array of states
       } catch (error) {
         console.error("Error fetching states:", error);
       }
@@ -270,7 +271,7 @@ const EmployerForm: React.FC = () => {
                         >
                           <option value="">Select State</option>
                           {states.map((state) => (
-                            <option key={state.geonameId} value={state.adminCode1}>
+                            <option key={state.id} value={state.id}>
                               {state.name}
                             </option>
                           ))}
@@ -292,7 +293,7 @@ const EmployerForm: React.FC = () => {
                         >
                           <option value="">Select City</option>
                           {cities.map((city) => (
-                            <option key={city.geonameId} value={city.name}>
+                            <option key={city.id} value={city.name}>
                               {city.name}
                             </option>
                           ))}
