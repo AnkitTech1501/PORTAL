@@ -26,6 +26,8 @@ const EmployerForm: React.FC = () => {
   const [states, setStates] = useState<string[]>([]); // For storing states
   const [cities, setCities] = useState<string[]>([]); // For storing cities based on selected state
   const [employers_bond, setEmployersBond] = useState<string[]>([]); // For storing Employer bond
+  const [jobCategories, setJobCategories] = useState<any[]>([]); // For storing job categories
+
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -142,7 +144,21 @@ const EmployerForm: React.FC = () => {
 
     fetchStates();
   }, []);
+  // Fetch Job Categories when the component mounts
+  useEffect(() => {
+    const fetchJobCategories = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/api/job_categories"); // Replace with your job categories API endpoint
+        const data = await response.json();
+        console.log("job categories = ", data);
+        setJobCategories(data); // Assuming the response is an array of job categories
+      } catch (error) {
+        console.error("Error fetching job categories:", error);
+      }
+    };
 
+    fetchJobCategories();
+  }, []);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const validationResults = validateForm();
@@ -479,28 +495,30 @@ const EmployerForm: React.FC = () => {
                 </div>
 
                 {/* Job Category */}
-                <div
-                  className={`mb-3 ${errors.job_category ? "is-invalid" : ""}`}
-                >
+                <div className={`mb-3 ${errors.job_category ? "is-invalid" : ""}`}>
                   <label htmlFor="job_category" className="form-label">
                     Job Category
                   </label>
-                  <input
-                    type="text"
-                    className={`form-control ${errors.job_category ? "is-invalid" : ""
-                      }`}
+                  <select
+                    className={`form-select ${errors.job_category ? "is-invalid" : ""}`}
                     id="job_category"
                     name="job_category"
                     value={formData.job_category}
                     onChange={handleChange}
-                  />
+                  >
+                    <option value="">Select Job Category</option>
+                    {jobCategories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.category_name}
+                      </option>
+                    ))}
+                  </select>
                   {errors.job_category && (
-                    <div className="invalid-feedback">
-                      {errors.job_category}
-                    </div>
+                    <div className="invalid-feedback">{errors.job_category}</div>
                   )}
                 </div>
-                
+
+
 
                 {/* Submit Button */}
                 <button type="submit" className="btn btn-dark form-control">
