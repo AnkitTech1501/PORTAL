@@ -18,12 +18,14 @@ const EmployerForm: React.FC = () => {
     address: "",
     state: "",
     city: "",
+    employer_bond: "",
   });
 
   const [errors, setErrors] = useState<any>({});
   const [message, setMessage] = useState<string>("");
   const [states, setStates] = useState<string[]>([]); // For storing states
   const [cities, setCities] = useState<string[]>([]); // For storing cities based on selected state
+  const [employers_bond, setEmployersBond] = useState<string[]>([]); // For storing Employer bond
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -71,6 +73,7 @@ const EmployerForm: React.FC = () => {
     if (!formData.address) newErrors.address = "Address is required";
     if (!formData.state) newErrors.state = "State is required";
     if (!formData.city) newErrors.city = "City is required";
+    if (!formData.employer_bond && formData.type === "Contract") newErrors.employer_bond = "Employee bond duration is required";
 
     if (formData.salary_range[0] >= formData.salary_range[1])
       newErrors.salary_range = "Minimum salary should be less than maximum salary";
@@ -88,6 +91,22 @@ const EmployerForm: React.FC = () => {
       salary_range: value,
     }));
   };
+  // Fetch employee bond data when the component mounts or on some specific event
+  useEffect(() => {
+    const fetchEmployerBond = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/employers_bond');
+        const data = await response.json();
+        console.log("employerdata = ", data);
+        // Assuming the data structure returned has an 'employer_bond' key
+        setEmployersBond(data);
+      } catch (error) {
+        console.error("Error fetching employee bond:", error);
+      }
+    };
+
+    fetchEmployerBond();
+  }, []);  // Empty dependency array ensures it runs once when the component mounts
 
   // Fetch cities when a state is selected
   useEffect(() => {
@@ -114,7 +133,7 @@ const EmployerForm: React.FC = () => {
       try {
         const response = await fetch("http://127.0.0.1:8000/api/states"); // Laravel API endpoint for states
         const data = await response.json();
-        console.log("data = ",data);
+        console.log("data = ", data);
         setStates(data); // Assuming the response contains an array of states
       } catch (error) {
         console.error("Error fetching states:", error);
@@ -155,6 +174,7 @@ const EmployerForm: React.FC = () => {
             address: "",
             state: "",
             city: "",
+            employer_bond: ""
           });
         } else {
           setMessage(data.message || "Something went wrong!");
@@ -339,7 +359,31 @@ const EmployerForm: React.FC = () => {
                     <div className="invalid-feedback">{errors.type}</div>
                   )}
                 </div>
-
+                {/* Render Employer Bond Field if Job Type is "Contract" */}
+                {formData.type === "Contract" && (
+                  <div className={`mb-3 ${errors.employer_bond ? "is-invalid" : ""}`}>
+                    <label htmlFor="employer_bond" className="form-label">
+                      Employer Bond
+                    </label>
+                    <select
+                      className={`form-select ${errors.employer_bond ? "is-invalid" : ""}`}
+                      id="employer_bond"
+                      name="employer_bond"
+                      value={formData.employer_bond}
+                      onChange={handleChange} // Handle change to update form data
+                    >
+                      <option value="">Select Bond</option>
+                      {employers_bond.map((bond) => (
+                        <option key={bond.id} value={bond.id}>
+                          {bond.bond_duration}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.employer_bond && (
+                      <div className="invalid-feedback">{errors.employer_bond}</div>
+                    )}
+                  </div>
+                )}
                 {/* Salary Range (Dual Range Slider) */}
                 <div
                   className={`mb-3 ${errors.salary_range ? "is-invalid" : ""}`}
@@ -456,6 +500,7 @@ const EmployerForm: React.FC = () => {
                     </div>
                   )}
                 </div>
+                
 
                 {/* Submit Button */}
                 <button type="submit" className="btn btn-dark form-control">
